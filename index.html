@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Reality Check · Guess the Gap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Geist:wght@400;600;700;800&family=Geist+Mono:wght@400;600&display=swap">
+<style>
+/* ============ Reality Check brand tokens (use exactly these) ============ */
+:root{
+  --violet:#6C4BFF;      /* Matura violet, white text on it */
+  --lime:#C6F432;        /* Apprenticeship lime, black text on it */
+  --sky:#7FD6FF;         /* Honest sky: ONLY the "how sure?" control */
+  --coral:#FF8A5B;       /* Surprise coral: "surprising", never "wrong" */
+  --ink:#121212;         /* text, 3px outlines */
+  --cloud:#EEF0FA;       /* page background */
+  --white:#FFFFFF;       /* cards */
+  --violet-text:#5A3BE8; /* small text in Matura colour */
+  --lime-text:#3F6600;   /* small text in apprenticeship colour */
+  --muted:#454B5E;       /* secondary reading text, 8:1 on white */
+  --dot:#767C92;         /* class dots, 3.9:1 on white */
+
+  --shout:"Bagel Fat One","Geist",system-ui,sans-serif;
+  --talk:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+
+  --outline:3px solid var(--ink);
+  --hard:0 6px 0 var(--ink);
+  --jelly:inset 0 6px 0 rgba(255,255,255,.4), inset 0 -8px 0 rgba(0,0,0,.18);
+  --r-tile:32px; --r-btn:28px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--cloud);color:var(--ink);font:400 18px/1.5 var(--talk);
+  padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(32px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+p{margin:0}
+h1,h2,h3{margin:0}
+[hidden]{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+
+/* Accent fallback: if Bagel Fat One lacks ä ö ü é è à, words with accents switch to Geist ExtraBold */
+.acc{font:inherit}
+html.no-accents .acc{font-family:var(--talk);font-weight:800}
+
+/* ============ Top bar & HUD ============ */
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tag{font:400 14px/1.2 var(--mono);border:2px solid var(--ink);border-radius:999px;padding:6px 12px;background:var(--white)}
+.linkbtn{background:none;border:0;color:var(--violet-text);font:600 16px var(--talk);text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:48px;padding:0 4px}
+.hud{display:flex;align-items:center;gap:12px}
+.lv{font:400 24px/1 var(--shout);white-space:nowrap}
+.xpbar{flex:1;height:22px;border:var(--outline);border-radius:999px;background:var(--white);overflow:hidden;position:relative}
+.xpbar i{position:absolute;inset:0 auto 0 0;background:var(--lime);border-right:3px solid var(--ink);width:0}
+.xpbar i.zero{border-right:0}
+.xptxt{font:400 15px var(--mono);white-space:nowrap}
+.rail{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0;padding:0;list-style:none}
+.rail li{font:600 15px var(--talk);border-top:6px solid #C9CDDC;padding-top:6px;color:var(--muted)}
+.rail li.on{border-color:var(--ink);color:var(--ink);font-weight:800}
+.rail li.on::before{content:"▸ "}
+.rail li.done{border-color:var(--ink);color:var(--ink)}
+.rail li.done::before{content:"✓ "}
+
+/* ============ Tiles (bento) ============ */
+.tile{background:var(--white);border:var(--outline);border-radius:var(--r-tile);box-shadow:var(--hard),var(--jelly);padding:22px 22px 26px;display:flex;flex-direction:column;gap:14px;position:relative}
+.tile.violet{background:var(--violet);color:var(--white)}
+.tile.lime{background:var(--lime);color:var(--ink)}
+.tile.coral{background:var(--coral);color:var(--ink)}
+.bento{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.span2{grid-column:1/-1}
+.screen{display:flex;flex-direction:column;gap:18px}
+
+.wordmark{font:400 clamp(58px,17vw,92px)/.9 var(--shout);letter-spacing:-.01em;margin-top:8px}
+.shout{font-family:var(--shout);font-weight:400;line-height:1.05}
+.h-stage{font:400 clamp(44px,12vw,64px)/1 var(--shout)}
+.h-tile{font:400 clamp(26px,7vw,32px)/1.08 var(--shout)}
+.q{font:800 clamp(22px,6vw,26px)/1.25 var(--talk);text-wrap:pretty}
+.eyebrow{font:400 15px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.04em}
+.tile.violet .eyebrow{color:var(--white)}
+.muted{color:var(--muted)}
+.lead{font-size:19px;padding:0 2px}
+.lead-q{font:400 clamp(24px,6.6vw,30px)/1.25 var(--talk);text-wrap:balance}
+.lead-sub{font-size:19px;margin-top:-4px}
+.tile.violet .lead-q{border-top:3px solid rgba(255,255,255,.55);padding-top:14px;margin-top:4px}
+.mono{font-family:var(--mono)}
+.src{font:400 16px/1.45 var(--mono);color:var(--muted)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.spread{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* Path chips: always the same size, whatever the path */
+.chip{display:inline-flex;align-items:center;min-height:34px;padding:4px 14px;border:var(--outline);border-radius:999px;font:700 16px/1.2 var(--talk);background:var(--white);color:var(--ink)}
+.chip.matura,.chip.appr{min-width:11em;justify-content:center}
+.chip.matura{background:var(--violet);color:var(--white)}
+.chip.appr{background:var(--lime);color:var(--ink)}
+.code{font:600 16px var(--mono)}
+
+/* ============ Buttons (jelly press) ============ */
+.btn{display:flex;align-items:center;justify-content:center;align-self:center;width:auto;min-width:min(100%,260px);max-width:100%;min-height:64px;padding:12px 40px;border:var(--outline);border-radius:var(--r-btn);
+  box-shadow:var(--hard),var(--jelly);background:var(--violet);color:var(--white);font:400 26px/1 var(--shout);cursor:pointer;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.btn.second{background:var(--white);color:var(--ink);font:700 19px/1.2 var(--talk);min-height:56px}
+.btn:disabled{background:#D7DAE6;color:#3A3F50;cursor:not-allowed;box-shadow:var(--hard)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--ink);outline-offset:4px}
+[tabindex="-1"]:focus{outline:none}
+@media (prefers-reduced-motion:no-preference){
+  .btn,.sure label{transition:transform .28s cubic-bezier(.34,1.9,.5,1)}
+  .btn:not(:disabled):active,.sure label:active{transform:scale(1.06,.94);transition-duration:.07s}
+}
+
+/* ============ Speech-bubble glossary tiles ============ */
+.bubbles{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.bubble{background:var(--white);border:var(--outline);border-radius:24px;padding:14px 16px 16px;position:relative;box-shadow:0 4px 0 var(--ink);display:flex;flex-direction:column;gap:4px}
+.bubble::after{content:"";position:absolute;left:26px;bottom:-13px;width:20px;height:20px;background:var(--white);border-right:var(--outline);border-bottom:var(--outline);transform:rotate(45deg);border-bottom-right-radius:4px}
+.bubble b{font-size:18px}
+.bubble p{font-size:18px;line-height:1.4}
+.bubble .t-matura{color:var(--violet-text)}
+.bubble .t-appr{color:var(--lime-text)}
+.bubbles .full{grid-column:1/-1}
+.bubbles.one{grid-template-columns:1fr}
+
+/* ============ Logo dial ============ */
+.dial{width:100%;max-width:150px;aspect-ratio:1;display:block;margin:auto}
+.dial .needle{transform-box:view-box;transform-origin:50px 50px}
+.dial.swing .needle{transition:transform 1.1s cubic-bezier(.25,1.7,.45,1)}
+@media (prefers-reduced-motion:reduce){.dial.swing .needle{transition:none}}
+
+/* ============ Guess controls ============ */
+.guess{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.bignum{font:400 clamp(72px,22vw,104px)/.9 var(--shout);font-variant-numeric:tabular-nums}
+.bignum small{font-size:.45em}
+.numlab{display:flex;flex-direction:column;gap:6px;font:600 16px var(--talk);text-align:right}
+input[type=number]{width:112px;min-height:52px;font:700 22px var(--talk);padding:8px 10px;border:var(--outline);border-radius:16px;background:var(--white);color:var(--ink);text-align:center}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:48px;background:transparent;margin:0;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:16px;border:var(--outline);border-radius:999px;background:linear-gradient(90deg,var(--violet) 0 var(--p,50%),var(--white) var(--p,50%) 100%)}
+input[type=range]::-moz-range-track{height:10px;border:var(--outline);border-radius:999px;background:var(--white)}
+input[type=range]::-moz-range-progress{height:10px;background:var(--violet);border-radius:999px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:38px;height:38px;margin-top:-14px;border-radius:50%;background:var(--white);border:var(--outline);box-shadow:0 4px 0 var(--ink)}
+input[type=range]::-moz-range-thumb{width:32px;height:32px;border-radius:50%;background:var(--white);border:var(--outline);box-shadow:0 4px 0 var(--ink)}
+.scale{display:flex;justify-content:space-between;font:400 15px var(--mono);color:var(--muted);margin-top:-4px}
+
+fieldset.sure{border:var(--outline);border-radius:24px;background:var(--white);padding:14px 14px 16px;margin:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;box-shadow:0 4px 0 var(--ink)}
+.sure legend{float:left;grid-column:1/-1;font:800 19px var(--talk);padding:0;margin-bottom:2px}
+.sure input{position:absolute;opacity:0;width:1px;height:1px}
+.sure label{display:flex;align-items:center;justify-content:center;text-align:center;min-height:56px;padding:6px 8px;border:var(--outline);border-radius:18px;font:700 17px/1.15 var(--talk);background:var(--white);cursor:pointer;box-shadow:0 3px 0 var(--ink)}
+.sure input:checked+label{background:var(--sky);box-shadow:var(--jelly),0 3px 0 var(--ink)}
+.sure input:checked+label::before{content:"✓\00a0"}
+.sure input:focus-visible+label{outline:3px solid var(--ink);outline-offset:3px}
+.hint{font:600 17px var(--talk);color:var(--muted);text-align:center}
+
+.classbox{display:flex;flex-direction:column;gap:6px;font:700 18px var(--talk)}
+.classbox textarea{font:400 18px var(--mono);min-height:56px;border:var(--outline);border-radius:16px;padding:10px 12px;resize:vertical;background:var(--white);color:var(--ink)}
+.classbox span{font:400 16px var(--talk);color:var(--muted)}
+
+/* ============ Reveal ============ */
+.result-head{display:flex;justify-content:space-between;align-items:flex-start;gap:4px 12px;flex-wrap:wrap}
+.result-head .shout{font-size:clamp(30px,8.5vw,40px)}
+.plus{font:400 clamp(30px,8.5vw,40px)/1 var(--shout);white-space:nowrap}
+.realrow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px}
+.realnum{font:400 clamp(64px,19vw,88px)/.9 var(--shout);font-variant-numeric:tabular-nums}
+.realnum small{font-size:.45em}
+.realrow .dial{width:110px}
+
+.plot{position:relative;margin:34px 6px 6px}
+.plot .base{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--ink)}
+.plot .gap{position:absolute;bottom:-5px;height:13px;background:var(--coral);opacity:.55;border-radius:6px}
+.plot .d{position:absolute;z-index:4;width:16px;height:16px;border-radius:50%;background:var(--dot);border:2px solid var(--white);transform:translateX(-50%)}
+.plot .you{position:absolute;bottom:-11px;width:26px;height:26px;border-radius:50%;background:var(--violet);border:var(--outline);transform:translateX(-50%);z-index:3}
+.plot .real{position:absolute;bottom:0;width:20px;border:var(--outline);border-radius:8px 8px 3px 3px;background:var(--lime);transform:translateX(-50%);transform-origin:bottom;z-index:2;box-shadow:var(--jelly)}
+.plot .flag{position:absolute;top:-30px;transform:translateX(-50%);font:800 16px var(--talk);white-space:nowrap;background:var(--white);border:2px solid var(--ink);border-radius:8px;padding:0 6px}
+.axis{display:flex;justify-content:space-between;font:400 15px var(--mono);margin:16px 6px 0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font:600 16px var(--talk)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:16px;height:16px;border-radius:50%;border:2px solid var(--ink)}
+.legend i.y{background:var(--violet)} .legend i.c{background:var(--dot)} .legend i.r{background:var(--lime);border-radius:4px}
+.classnote{font:400 16px var(--talk);color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){
+  .plot .d{animation:rain .55s cubic-bezier(.3,1.5,.6,1) both}
+  .plot .real{animation:grow .6s cubic-bezier(.3,1.6,.6,1) both}
+  .plot .flag{animation:pop .3s ease-out both}
+}
+@keyframes rain{from{transform:translate(-50%,-140px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+@keyframes grow{from{transform:translateX(-50%) scaleY(0)}to{transform:translateX(-50%) scaleY(1)}}
+@keyframes pop{from{opacity:0}to{opacity:1}}
+
+.note{display:flex;flex-direction:column;gap:10px}
+.note .belief{border-top:2px dashed var(--ink);padding-top:10px}
+.caveat{background:var(--white);border:var(--outline);border-left-width:12px;border-radius:20px;padding:14px 16px}
+.caveat strong{display:block}
+
+/* ============ End screen ============ */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.stat{background:var(--white);border:var(--outline);border-radius:24px;box-shadow:0 4px 0 var(--ink);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat b{font:400 28px/1.05 var(--shout)}
+.stat .src{font:400 16px/1.4 var(--talk)}
+.badge{display:inline-flex;align-items:center;gap:8px;border:var(--outline);border-radius:999px;padding:8px 16px;font:700 17px var(--talk);background:var(--white)}
+.badge.got{background:var(--sky)}
+.badge.got::before{content:"★"}
+
+/* ============ Sources ============ */
+.tablewrap{overflow-x:auto;border:var(--outline);border-radius:20px;background:var(--white)}
+table{border-collapse:collapse;width:100%;font:400 16px var(--talk)}
+th,td{text-align:left;padding:10px 12px;border-bottom:2px solid #D7DAE6;vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.c{font-family:var(--mono);white-space:nowrap}
+ul.plain{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.scoretab td{font-family:var(--talk)}
+
+/* ============ Feedback FX ============ */
+#fx{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+.conf{position:absolute;width:12px;height:16px;border:2px solid var(--ink);border-radius:3px;will-change:transform}
+.spark{position:absolute;font:400 26px/1 var(--shout);color:var(--ink);will-change:transform}
+.xpfly{position:fixed;z-index:60;font:400 30px/1 var(--shout);color:var(--ink);background:var(--lime);border:var(--outline);border-radius:999px;padding:6px 14px;box-shadow:0 4px 0 var(--ink);pointer-events:none;white-space:nowrap}
+.toast{position:fixed;left:50%;top:max(18px,env(safe-area-inset-top));transform:translateX(-50%);z-index:70;background:var(--lime);border:var(--outline);border-radius:24px;box-shadow:var(--hard),var(--jelly);padding:12px 24px;font:400 28px/1.1 var(--shout);white-space:nowrap}
+.tier{display:inline-flex;align-items:center;gap:6px;font:600 15px var(--mono);text-transform:uppercase;letter-spacing:.04em}
+.meter{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:2px}
+.meter i{height:10px;border:2px solid var(--ink);border-radius:999px;background:transparent}
+.meter i.on{background:var(--ink)}
+.foot{font:400 15px/1.45 var(--talk);color:var(--muted);text-align:center}
+
+@media (max-width:380px){
+  .bento,.bubbles,.stats{grid-template-columns:1fr}
+  .sure label{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <span class="tag">Prototype v0.2 · Checked fact bank</span>
+    <div class="row" style="gap:4px">
+      <button class="linkbtn" id="sndBtn" type="button" aria-pressed="true">Sound: on</button>
+      <button class="linkbtn" id="srcBtn" type="button">Sources &amp; AI disclosure</button>
+    </div>
+  </div>
+
+  <div class="hud" id="hud" aria-label="Your level and XP">
+    <span class="lv" id="lv">LV 1</span>
+    <div class="xpbar" aria-hidden="true"><i id="xpfill" class="zero"></i></div>
+    <span class="xptxt" id="xptxt">0 XP</span>
+  </div>
+  <ol class="rail" id="rail" hidden aria-label="Stages"><li>School</li><li>Studies</li><li>Workforce</li></ol>
+
+  <main id="screen" class="screen" aria-live="polite"></main>
+  <section id="sourcesView" class="screen" hidden></section>
+
+  <div id="fx" aria-hidden="true"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <p class="foot">Educational prototype by a student team (PROMPT H26). Not official HSLU or Women in Tech Index communication.</p>
+</div>
+
+<script>
+/* =====================================================================
+   SCORING: adjustable starting values for playtesting, not final.
+   "Close" = guess within CLOSE_WITHIN percentage points of the real figure.
+   ===================================================================== */
+const SCORING={
+  CLOSE_WITHIN:5,
+  points:{                     // [close, far off]
+    very:{close:100,far:0},    // from brand guide
+    kinda:{close:80,far:15},   // +80 from moodboard; +15 is a placeholder
+    not:{close:60,far:30}      // from brand guide
+  },
+  XP_PER_LEVEL:300,
+  // Badge "Knows what they don't know": at least this many far-off rounds, and none of them marked "Very sure"
+  BADGE_MIN_FAR:2
+};
+const SURE_LABEL={not:"Not sure",kinda:"Kinda",very:"Very sure"};
+
+/* =====================================================================
+   CONTENT: from the team fact bank ("Project Content" tab, freeze date 16 Nov 2026).
+   Every figure below is marked Checked (by Franco). Final "Approved" status is still pending.
+   Unchanged from v0.2. Added only: code, path, terms (display metadata).
+   ===================================================================== */
+const REPORT="Women in Tech Index";
+const ROUNDS=[
+ {id:"school-01",stage:0,year:"2024",answer:29.4,path:"matura",terms:["pam"],
+  q:"In 2024, what share of Academic Matura graduates with Physics and Applications of Mathematics (PAM) as their core subject were women?",
+  explanation:"About three in ten. The share has grown, but it is still well below half.",
+  misconception:"Many people assume maths-heavy school subjects are close to 50/50 by now.",
+  source:"Section 2.1, Fig. 2, p. 4",caveat:""},
+ {id:"school-02",stage:0,year:"2008",answer:21.0,path:"matura",terms:[],
+  q:"Same group, earlier: in 2008, what share of Academic Matura graduates with PAM as their core subject were women?",
+  explanation:"About one in five. By 2024 it had risen to 29.4%, an increase of 8.4 percentage points.",
+  misconception:"Some people expect no change at school level. Here the share of women has clearly grown.",
+  source:"Section 2.1, Fig. 2, p. 4",caveat:""},
+ {id:"school-03",stage:0,year:"2025",answer:15.0,path:"appr",terms:["bm"],
+  q:"In 2025, what share of technical Vocational Matura graduates (BM1 and BM2 combined) were women?",
+  explanation:"Fewer than one in six. The vocational route into tech is more male-dominated than the academic one.",
+  misconception:"Apprenticeships are often seen as a more open route, but the technical track is not.",
+  source:"Section 2.2, Fig. 4, p. 5",
+  caveat:"BM1 (taken during the apprenticeship) and BM2 (taken after it) are counted together."},
+ {id:"school-04",stage:0,year:"2005",answer:12.2,path:"appr",terms:[],
+  q:"Same group, earlier: in 2005, what share of technical Vocational Matura graduates (BM1 and BM2 combined) were women?",
+  explanation:"About one in eight. The share rose to 15.0% by 2025, but the report notes this is partly because fewer men took this route, not only because more women did.",
+  misconception:"A rising share is usually read as 'more women'. Here it is partly 'fewer men'.",
+  source:"Section 2.2, Fig. 4, p. 5",
+  caveat:"BM1 and BM2 are counted together. A rising share of women can also come from a falling number of men."},
+
+ {id:"studies-01",stage:1,year:"2025",answer:21.4,path:null,terms:[],
+  q:"Across all Swiss universities, what share of enrolled ICT students were women in 2025?",
+  explanation:"Roughly one in five. In 2008 it was 12.7%, so the share has grown, but four in five ICT students are still men.",
+  misconception:"Some people assume ICT studies are as male-dominated as ever. They have changed, just not enough.",
+  source:"Section 2.4, Fig. 7, p. 7",caveat:""},
+ {id:"studies-04",stage:1,year:"2008",answer:6.8,path:null,terms:["uas"],
+  q:"In 2008, what share of enrolled ICT students at Swiss universities of applied sciences (Fachhochschulen) were women?",
+  explanation:"Under 7%, far behind universities at the time (12.7%). By 2025 it had risen to 20.3%, almost level with universities.",
+  misconception:"Universities of applied sciences were not always as balanced as universities in ICT. They have caught up from far behind.",
+  source:"Section 2.4, Fig. 7, p. 7",caveat:""},
+ {id:"studies-05",stage:1,year:"2025/26",answer:15.6,path:null,terms:[],
+  q:"In 2025/26, HSLU had the lowest share of women among the institutions shown in the report. What share of its ICT students were women?",
+  explanation:"About one in six. The University of Zurich had the highest share shown, at 29.6%.",
+  misconception:"People often expect institutions to be similar. The spread between them is large.",
+  source:"Section 2.3, Fig. 6, pp. 6–7",
+  caveat:"Institutions offer different ICT fields, so they are not fully comparable (report footnote 2). This figure is not official HSLU communication."},
+ {id:"studies-09",stage:1,year:"2025/26",answer:61.9,path:null,terms:[],
+  q:"In 2025/26, what share of students in Medical Informatics at Swiss universities were women?",
+  explanation:"Over 60%, a clear majority. In Computer Science the share is 16.4%.",
+  misconception:"Many people assume every ICT field is male-dominated. It depends strongly on the field.",
+  source:"Appendix A.1, Table 2, p. 18",
+  caveat:"This is one ICT field, not ICT as a whole."},
+
+ {id:"workforce-01",stage:2,year:"2024",answer:13.8,path:null,terms:["occ"],
+  q:"What share of people working in ICT occupations in Switzerland (for example developers or IT support) were women in 2024?",
+  explanation:"Only about one in seven. Up from 8.8% in 1990, but lower than the share of women among ICT students today.",
+  misconception:"People often expect the workforce to have caught up with the students. It has not.",
+  source:"Section 3.1, Fig. 8, p. 8",
+  caveat:"This counts ICT occupations: people whose job is ICT, in any company. Do not compare it directly with ICT sector figures."},
+ {id:"workforce-03",stage:2,year:"2023",answer:24.0,path:null,terms:["sector"],
+  q:"What share of all people employed in the Swiss ICT sector (everyone working for an ICT company) were women in 2023?",
+  explanation:"About one in four. Higher than the 13.8% in ICT jobs, because ICT companies also employ people in sales, HR, finance and other non-technical roles. In 2011 it was 23.9%: almost no change in twelve years.",
+  misconception:"This number is often quoted as 'women in tech jobs', which overstates the share.",
+  source:"Section 4.1, Fig. 10, pp. 9–10",
+  caveat:"This counts the ICT sector: everyone at an ICT company, whatever their role. The report's introduction gives a slightly different figure (about 23.7%, p. 3); this round uses the chart value for 2023."},
+ {id:"workforce-05",stage:2,year:"1991",answer:31.5,path:null,terms:[],
+  q:"In 1991, what share of people employed in the Swiss ICT sector were women?",
+  explanation:"Higher than today's 24.0%. The share of women in the ICT sector has gone down, not up.",
+  misconception:"Many people assume tech has slowly become more balanced over time.",
+  source:"Section 1, Fig. 1, p. 3",
+  caveat:"Sector figure (everyone working for ICT companies), so compare it with 24.0%, not with 13.8%."},
+ {id:"workforce-06",stage:2,year:"",answer:51.4,path:null,terms:[],
+  q:"For comparison: what share of people employed in Swiss public administration are women?",
+  explanation:"About half. Some sectors are balanced, so a large gap is not a given.",
+  misconception:"Some people assume every sector looks like ICT. Many do not.",
+  source:"Section 1, Fig. 1, p. 3",
+  caveat:"Not ICT: this is a comparison sector."}
+];
+ROUNDS.forEach((r,k)=>r.code="RC-"+String(k+1).padStart(2,"0"));
+const YEAR_PLACEHOLDER="[year: XX]"; // shown wherever the fact bank has no year
+const yr=r=>r.year||YEAR_PLACEHOLDER;
+
+const STAGES=["School","Studies","Workforce"];
+const STAGE_INTRO=[
+ "Where young people choose their focus: the Matura subjects and vocational tracks that lead into tech.",
+ "Universities and universities of applied sciences: who studies ICT, then and now.",
+ "The jobs: who actually works in ICT, and how that has changed."];
+
+/* Glossary: shown as a speech bubble the first time a term appears */
+const TERMS={
+ matura:{t:"Matura?",cls:"t-matura",d:"The exam at the end of upper secondary school (Gymnasium). It gets you into university."},
+ appr:{t:"Apprenticeship?",cls:"t-appr",d:"You learn a job at a company and go to vocational school part of the week. You get paid."},
+ ict:{t:"ICT?",d:"Information and communication technology: jobs with computers, software and networks."},
+ pam:{t:"PAM?",cls:"t-matura",d:"Physics and Applications of Mathematics: one of the core subjects you can pick for the Academic Matura."},
+ bm:{t:"Vocational Matura?",cls:"t-appr",d:"The Berufsmaturität (BM): an extra qualification next to an apprenticeship. It opens the way to universities of applied sciences. BM1 is taken during the apprenticeship, BM2 after it."},
+ uas:{t:"University of applied sciences?",d:"A Fachhochschule: a university that focuses on practical, job-related study. Many students arrive with a Vocational Matura."},
+ occ:{t:"ICT occupation?",d:"People whose job is ICT (developers, IT support…), in any kind of company."},
+ sector:{t:"ICT sector?",d:"Everyone who works for an ICT company, whatever their job: also sales, HR or finance."},
+ pp:{t:"Percentage points?",d:"The plain gap between two percentages: 40% to 45% is +5 percentage points."}
+};
+
+/* =====================================================================
+   FEEDBACK TIERS: how close the guess was (in percentage points).
+   Decides the headline, animation and sound. XP still comes from SCORING.
+   Guesses are whole numbers, so "exact" means right to the whole percent.
+   ===================================================================== */
+const TIERS=[
+ {key:"exact", max:0.5,      h:"Bullseye!",        say:"Exact, to the whole percent.",  tone:"lime",  fx:"confetti", snd:"fanfare"},
+ {key:"vclose",max:2,        h:"So close!",        say:"Within 2 percentage points.",   tone:"lime",  fx:"sparkle",  snd:"chime"},
+ {key:"close", max:5,        h:"Nice read!",       say:"Within 5 percentage points.",   tone:"lime",  fx:"pop",      snd:"ding"},
+ {key:"near",  max:10,       h:"Not far off!",     say:"Within 10 percentage points.",  tone:"",      fx:"wiggle",   snd:"boop"},
+ {key:"far",   max:20,       h:"Plot twist!",      say:"More than 10 percentage points away.", tone:"coral", fx:"wobble", snd:"wah"},
+ {key:"way",   max:Infinity, h:"Mega plot twist!", say:"More than 20 percentage points away. Reality surprised you!", tone:"coral", fx:"spin", snd:"slide"}
+];
+const tierOf=e=>TIERS.find(t=>e<=t.max);
+
+/* ============ Sound: synthesized with Web Audio, no files ============ */
+const Sound=(()=>{
+  let ctx=null, on=true;
+  try{ if(localStorage.getItem("rc-sound")==="off") on=false; }catch(e){}
+  const ac=()=>{ if(!ctx){ const C=window.AudioContext||window.webkitAudioContext; if(!C) return null; ctx=new C(); } if(ctx.state==="suspended") ctx.resume(); return ctx; };
+  function tone(f,t0,dur,{type="sine",vol=.16,to=null,vib=0}={}){
+    const c=ac(); if(!c) return; const t=c.currentTime+t0;
+    const o=c.createOscillator(), g=c.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t);
+    if(to) o.frequency.exponentialRampToValueAtTime(to,t+dur);
+    if(vib){ const l=c.createOscillator(), lg=c.createGain(); l.frequency.value=vib; lg.gain.value=f*.06; l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(t+dur); }
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.015); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+.05);
+  }
+  const N={C5:523.25,D5:587.33,E5:659.25,G5:783.99,A5:880,B5:987.77,C6:1046.5,E6:1318.5,G4:392,C4:261.63};
+  const S={
+    tap:()=>tone(1400,0,.04,{type:"triangle",vol:.06}),
+    select:()=>{tone(880,0,.06,{type:"triangle",vol:.08});tone(1320,.04,.06,{type:"triangle",vol:.06});},
+    fanfare:()=>{[N.C5,N.E5,N.G5,N.C6].forEach((f,k)=>tone(f,k*.09,.22,{type:"triangle",vol:.17})); tone(N.C6,.38,.5,{type:"triangle",vol:.17}); tone(N.E6,.38,.5,{type:"sine",vol:.09}); [0,1,2,3].forEach(k=>tone(2000+k*400,.5+k*.06,.08,{vol:.05}));},
+    chime:()=>{tone(N.E5,0,.25,{vol:.16}); tone(N.B5,.12,.45,{vol:.16}); tone(N.E6,.12,.45,{vol:.05});},
+    ding:()=>{tone(N.A5,0,.5,{vol:.17}); tone(N.A5*2,0,.3,{vol:.04});},
+    boop:()=>{tone(N.G4,0,.12,{type:"square",vol:.06}); tone(N.C5,.12,.18,{type:"square",vol:.06});},
+    wah:()=>{tone(440,0,.25,{type:"triangle",vol:.14,to:330}); tone(330,.26,.45,{type:"triangle",vol:.14,to:220,vib:7});},
+    slide:()=>{tone(1300,0,.75,{type:"sine",vol:.14,to:180}); tone(140,.78,.45,{type:"sine",vol:.18,vib:12}); tone(90,.78,.2,{type:"triangle",vol:.12});},
+    levelup:()=>{[N.C5,N.E5,N.G5,N.C6,N.E6].forEach((f,k)=>tone(f,k*.07,.18,{type:"square",vol:.06}));}
+  };
+  return {
+    play(n){ if(on&&S[n]) try{S[n]();}catch(e){} },
+    get on(){return on;},
+    toggle(){ on=!on; try{localStorage.setItem("rc-sound",on?"on":"off");}catch(e){} if(on) ac(); return on; }
+  };
+})();
+
+/* ============ Animations: skipped when the player prefers reduced motion ============ */
+const FX={
+  layer:()=>document.getElementById("fx"),
+  burst(el,{n=70,kind="confetti"}={}){
+    if(reduced()||!el) return;
+    const r=el.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+    const cols=["#6C4BFF","#C6F432","#FF8A5B","#FFFFFF"];
+    for(let k=0;k<n;k++){
+      const d=document.createElement("span");
+      if(kind==="confetti"){ d.className="conf"; d.style.background=cols[k%cols.length]; }
+      else { d.className="spark"; d.textContent=k%2?"✦":"✧"; }
+      d.style.left=cx+"px"; d.style.top=cy+"px"; FX.layer().appendChild(d);
+      const a=Math.random()*Math.PI*2, v=(kind==="confetti"?160:90)+Math.random()*(kind==="confetti"?220:80);
+      const dx=Math.cos(a)*v, dy=Math.sin(a)*v-(kind==="confetti"?120:40), fall=kind==="confetti"?420+Math.random()*260:30;
+      const rot=(Math.random()*2-1)*720, dur=kind==="confetti"?1500+Math.random()*700:800+Math.random()*300;
+      d.animate([
+        {transform:"translate(-50%,-50%) rotate(0) scale(.4)",opacity:1},
+        {transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) rotate(${rot/2}deg) scale(1)`,opacity:1,offset:.35},
+        {transform:`translate(calc(-50% + ${dx*1.3}px),calc(-50% + ${dy+fall}px)) rotate(${rot}deg) scale(.9)`,opacity:0}
+      ],{duration:dur,easing:"cubic-bezier(.2,.7,.4,1)",fill:"forwards"}).onfinish=()=>d.remove();
+    }
+  },
+  move(el,kind){
+    if(reduced()||!el) return;
+    const K={
+      pop:[{transform:"scale(.7)"},{transform:"scale(1.07)",offset:.6},{transform:"scale(.98)",offset:.8},{transform:"scale(1)"}],
+      wiggle:[{transform:"rotate(0)"},{transform:"rotate(-2.5deg)"},{transform:"rotate(2.5deg)"},{transform:"rotate(-1.5deg)"},{transform:"rotate(0)"}],
+      wobble:[{transform:"translateX(0) rotate(0)"},{transform:"translateX(-14px) rotate(-4deg)"},{transform:"translateX(10px) rotate(3deg)"},{transform:"translateX(-6px) rotate(-2deg)"},{transform:"translateX(0) rotate(0)"}],
+      spin:[{transform:"rotate(0) scale(.6)"},{transform:"rotate(-8deg) scale(1.08)",offset:.35},{transform:"rotate(6deg) scale(.97)",offset:.55},{transform:"rotate(-3deg) scale(1.02)",offset:.75},{transform:"rotate(0) scale(1)"}]
+    };
+    el.animate(K[kind]||K.pop,{duration:kind==="spin"?900:650,easing:"cubic-bezier(.3,1.4,.5,1)"});
+  },
+  xpFly(fromEl,amount){
+    if(!fromEl) return;
+    const target=document.getElementById("xptxt");
+    if(reduced()||!target||amount<=0) return;
+    const a=fromEl.getBoundingClientRect(), b=target.getBoundingClientRect();
+    const f=document.createElement("div"); f.className="xpfly"; f.textContent=`+${amount} XP`;
+    f.style.left=a.left+"px"; f.style.top=a.top+"px"; document.body.appendChild(f);
+    f.animate([
+      {transform:"translate(0,0) scale(.6)",opacity:0},
+      {transform:"translate(0,-36px) scale(1.15)",opacity:1,offset:.3},
+      {transform:`translate(${b.left-a.left}px,${b.top-a.top}px) scale(.5)`,opacity:.2}
+    ],{duration:1100,easing:"cubic-bezier(.5,0,.3,1)",fill:"forwards"}).onfinish=()=>{
+      f.remove(); target.animate([{transform:"scale(1)"},{transform:"scale(1.35)"},{transform:"scale(1)"}],{duration:300});
+    };
+  },
+  toast(text,ms=2200){
+    const t=document.getElementById("toast"); t.innerHTML=text; t.hidden=false;
+    if(!reduced()) t.animate([{transform:"translate(-50%,-40px) scale(.7)",opacity:0},{transform:"translate(-50%,0) scale(1.08)",opacity:1,offset:.6},{transform:"translate(-50%,0) scale(1)",opacity:1}],{duration:450,easing:"cubic-bezier(.3,1.5,.5,1)"});
+    clearTimeout(t._h); t._h=setTimeout(()=>{t.hidden=true;},ms);
+  }
+};
+
+/* ============ Helpers ============ */
+const $=s=>document.querySelector(s);
+const screen=$("#screen"), rail=$("#rail"), srcView=$("#sourcesView");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shout=s=>esc(s).replace(/\S*[äöüéèàÄÖÜÉÈÀ]\S*/g,m=>`<span class="acc">${m}</span>`); // for Bagel Fat One text
+const fmt=n=>(Math.round(n*10)/10).toLocaleString("en",{minimumFractionDigits:n%1?1:0,maximumFractionDigits:1})+"%";
+const pp=n=>(Math.round(n*10)/10).toLocaleString("en",{maximumFractionDigits:1});
+const reduced=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+let i=0, results=[], lastStage=-1, xp=0, classMode=false, seen=new Set();
+
+function focusFirst(root=screen){const h=root.querySelector("h1,h2");if(h){h.tabIndex=-1;h.focus({preventScroll:true});}window.scrollTo({top:0,behavior:reduced()?"auto":"smooth"});}
+function setRail(stage){
+  rail.hidden=stage<0;
+  [...rail.children].forEach((d,k)=>{d.className=k===stage?"on":k<stage?"done":"";d.removeAttribute("aria-current");if(k===stage)d.setAttribute("aria-current","step");});
+}
+function level(x){return Math.floor(x/SCORING.XP_PER_LEVEL)+1;}
+function setHud(){
+  $("#lv").textContent="LV "+level(xp);
+  const into=xp%SCORING.XP_PER_LEVEL, f=$("#xpfill");
+  f.style.width=(into/SCORING.XP_PER_LEVEL*100)+"%";
+  f.classList.toggle("zero",into===0);
+  if(!reduced()) f.style.transition="width .6s cubic-bezier(.3,1.4,.6,1)";
+  $("#xptxt").textContent=xp+" XP";
+  $("#hud").setAttribute("aria-label",`Level ${level(xp)}, ${xp} XP`);
+}
+function bubble(key,extra=""){const t=TERMS[key];return `<div class="bubble ${extra}"><b class="${t.cls||""}">${esc(t.t)}</b><p>${esc(t.d)}</p></div>`;}
+function newBubbles(keys){
+  const fresh=keys.filter(k=>!seen.has(k)); fresh.forEach(k=>seen.add(k));
+  if(!fresh.length) return "";
+  return `<div class="bubbles${fresh.length===1?" one":""}" aria-label="Word help">${fresh.map(k=>bubble(k)).join("")}</div>`;
+}
+function chip(r){
+  if(r.path==="matura") return `<span class="chip matura">Matura</span>`;
+  if(r.path==="appr") return `<span class="chip appr">Apprenticeship</span>`;
+  if(r.id==="workforce-06") return `<span class="chip">Comparison · not ICT</span>`;
+  return `<span class="chip">${STAGES[r.stage]} · ICT</span>`;
+}
+function dialSVG(id,pct){
+  const a=(pct||0)*3.6;
+  return `<svg class="dial" id="${id}" viewBox="0 0 100 100" aria-hidden="true">
+    <path d="M50 4 A46 46 0 0 0 50 96 Z" fill="#6C4BFF"/>
+    <path d="M50 4 A46 46 0 0 1 50 96 Z" fill="#C6F432"/>
+    <circle cx="50" cy="50" r="46" fill="none" stroke="#121212" stroke-width="4"/>
+    <g class="needle" style="transform:rotate(${a}deg)"><line x1="50" y1="50" x2="50" y2="15" stroke="#121212" stroke-width="7" stroke-linecap="round"/></g>
+    <circle cx="50" cy="50" r="8" fill="#121212"/></svg>`;
+}
+
+/* ============ Start ============ */
+function start(){
+  i=0;results=[];lastStage=-1;xp=0;classMode=false;seen=new Set(["matura","appr","ict"]);
+  setRail(-1);setHud();
+  screen.innerHTML=`
+   <div class="bento">
+     <div class="tile violet span2">
+       <h1 class="wordmark">${shout("Reality Check")}</h1>
+       <p class="lead-q">How many women are there at each step on the way into Swiss tech?</p>
+       <p class="lead-sub">Guess, say how sure you are, then see the real figure from the Women in Tech Index report.</p>
+     </div>
+     <div class="tile lime" style="justify-content:center">${dialSVG("logoDial",8)}</div>
+     <div class="tile" style="justify-content:center"><p class="h-tile">${shout("How good are your guesses?")}</p></div>
+   </div>
+   <button class="btn" id="go" type="button">${shout("Start")}</button>`;
+  $("#go").onclick=onboarding;
+  focusFirst();
+}
+
+/* ============ Onboarding ============ */
+function onboarding(){
+  setRail(-1);
+  screen.innerHTML=`
+   <h1 class="sr-only">How to play Reality Check</h1>
+   <div class="bubbles" aria-label="Words you will meet">
+     ${bubble("matura")}${bubble("appr")}${bubble("ict","full")}
+   </div>
+   <div class="tile">
+     <h2 class="h-tile">${shout("How it works")}</h2>
+     <p class="eyebrow muted">${ROUNDS.length} rounds · about 10 minutes</p>
+     <ol class="plain" style="padding-left:24px">
+       <li>Read the question.</li>
+       <li>Set your guess between 0 and 100%.</li>
+       <li>Say how sure you are: Not sure, Kinda or Very sure.</li>
+       <li>Lock it in and see how close you were.</li>
+     </ol>
+     <p><b>Honest beats lucky.</b> "Close" means within ${SCORING.CLOSE_WITHIN} percentage points. Being very sure and close earns the most XP. Being very sure and far off earns nothing. Saying "Not sure" still earns XP.</p>
+   </div>
+   <button class="btn" id="go" type="button">${shout("Let's play")}</button>
+   <button class="btn second" id="teach" type="button">Teacher: start class mode</button>`;
+  $("#go").onclick=next;
+  $("#teach").onclick=classIntro;
+  focusFirst();
+}
+
+function classIntro(){
+  classMode=true;
+  screen.innerHTML=`
+   <div class="tile">
+     <p class="eyebrow">For teachers</p>
+     <h2 class="h-tile">${shout("Class mode")}</h2>
+     <p>Put this screen on the projector. In each round:</p>
+     <ol class="plain" style="padding-left:24px">
+       <li>Read the question out loud. Students write down a number from 0 to 100.</li>
+       <li>Collect the numbers (show of hands, or call them out) and type them into <b>Class guesses</b>. Numbers only, no names.</li>
+       <li>Agree on one class guess and how sure the class is, then lock it in.</li>
+     </ol>
+     <p>Each typed number appears as an anonymous dot next to the real figure. Nothing is saved: the numbers are gone when you close the page.</p>
+   </div>
+   <button class="btn" id="go" type="button">${shout("Start")}</button>
+   <button class="btn second" id="back" type="button">Back</button>`;
+  $("#go").onclick=next;$("#back").onclick=onboarding;
+  focusFirst();
+}
+
+function next(){
+  if(i>=ROUNDS.length) return end();
+  const r=ROUNDS[i];
+  if(r.stage!==lastStage){lastStage=r.stage;return stageCard(r.stage);}
+  round(r);
+}
+
+function stageCard(s){
+  setRail(s);
+  screen.innerHTML=`
+   <div class="tile ${s===1?"lime":s===0?"violet":""}">
+     <p class="eyebrow">Stage ${s+1} of 3</p>
+     <h2 class="h-stage">${shout(STAGES[s])}</h2>
+     <p>${esc(STAGE_INTRO[s])}</p>
+   </div>
+   <button class="btn" id="go" type="button">${shout("Continue")}</button>`;
+  $("#go").onclick=()=>round(ROUNDS[i]);
+  focusFirst();
+}
+
+/* ============ Round ============ */
+function round(r){
+  setRail(r.stage);
+  let moved=false, sure=null;
+  screen.innerHTML=`
+   <div class="tile">
+     <div class="spread">${chip(r)}<span class="code">${r.code}</span></div>
+     <h2 class="q" id="q">${esc(r.q)}</h2>
+   </div>
+   ${newBubbles(r.terms)}
+   <div class="guess">
+     <div><div class="bignum" aria-hidden="true"><span id="show">50</span><small>%</small></div><p class="muted" style="font-size:16px">my guess</p></div>
+     <label class="numlab" for="num">Type your guess<input id="num" type="number" inputmode="numeric" min="0" max="100" step="1" value="50" aria-describedby="q"></label>
+   </div>
+   <div>
+     <input id="rng" type="range" min="0" max="100" step="1" value="50" aria-label="Your guess in percent" aria-describedby="q" aria-valuetext="50 percent" style="--p:50%">
+     <div class="scale" aria-hidden="true"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+   </div>
+   <fieldset class="sure">
+     <legend>How sure are you?</legend>
+     ${["not","kinda","very"].map(k=>`<input type="radio" name="sure" id="s-${k}" value="${k}"><label for="s-${k}">${SURE_LABEL[k]}</label>`).join("")}
+   </fieldset>
+   ${classMode?`<label class="classbox" for="cls">Class guesses (optional)
+      <span id="clsHelp">Type the numbers your class called out, separated by commas or spaces. No names.</span>
+      <textarea id="cls" rows="2" inputmode="numeric" placeholder="e.g. 20, 35, 50" aria-describedby="clsHelp"></textarea></label>`:""}
+   <p class="hint" id="hint">Move the slider or type a number.</p>
+   <button class="btn" id="lock" type="button" disabled>${shout("Lock it in")}</button>`;
+
+  const rng=$("#rng"),num=$("#num"),show=$("#show"),lock=$("#lock"),hint=$("#hint");
+  const update=()=>{
+    const ready=moved&&sure;
+    lock.disabled=!ready;
+    hint.textContent=!moved?"Move the slider or type a number.":!sure?"Now pick how sure you are.":"Ready when you are.";
+  };
+  const set=v=>{v=Math.min(100,Math.max(0,Math.round(+v||0)));rng.value=v;rng.style.setProperty("--p",v+"%");rng.setAttribute("aria-valuetext",v+" percent");show.textContent=v;moved=true;update();return v;};
+  rng.oninput=()=>{num.value=set(rng.value);};
+  num.oninput=()=>{if(num.value!=="")set(num.value);};
+  num.onblur=()=>{num.value=rng.value;};
+  num.onkeydown=e=>{if(e.key==="Enter"&&!lock.disabled)lock.click();};
+  screen.querySelectorAll('input[name=sure]').forEach(el=>el.onchange=()=>{sure=el.value;update();});
+  lock.onclick=()=>{
+    const cls=classMode?parseClass($("#cls").value):[];
+    reveal(r,+rng.value,sure,cls);
+  };
+  focusFirst();
+}
+function parseClass(s){
+  return (s.match(/\d+(?:[.,]\d+)?/g)||[]).map(x=>+x.replace(",",".")).filter(x=>x>=0&&x<=100).slice(0,80);
+}
+
+/* ============ Reveal ============ */
+function outcome(close,sure){
+  const T={
+    "close-very":{s:"Called it: close, and you were very sure."},
+    "close-kinda":{s:"Close, and you were “kinda” sure."},
+    "close-not":{s:"You know more than you think: close, even though you weren't sure."},
+    "far-not":{s:"Honest miss: you said you weren't sure. Fair enough."},
+    "far-kinda":{s:"Not close this time, and you were “kinda” sure."},
+    "far-very":{s:"You were very sure, so no XP this time."}
+  };
+  return T[(close?"close":"far")+"-"+sure];
+}
+
+function reveal(r,g,sure,cls){
+  const e=Math.abs(g-r.answer), signed=g-r.answer, close=e<=SCORING.CLOSE_WITHIN;
+  const p=SCORING.points[sure][close?"close":"far"];
+  const o=outcome(close,sure), t=tierOf(e), lvBefore=level(xp);
+  results.push({r,g,e,p,signed,sure,close,cls,tier:t.key});
+  xp+=p;
+  const dir=e<0.05?"Exactly right!":`Off by ${pp(e)} percentage points: your guess was too ${signed>0?"high":"low"}.`;
+
+  // Class dots: bin to nearest 4%, stack upward
+  const BIN=4, stacks={};
+  const dots=cls.map(v=>{const b=Math.round(v/BIN)*BIN;const n=stacks[b]=(stacks[b]||0)+1;return {x:Math.min(100,Math.max(0,b)),lvl:n-1};});
+  const maxStack=Math.max(0,...Object.values(stacks));
+  const plotH=Math.max(110,maxStack*17+60);
+  const lo=Math.min(g,r.answer), hi=Math.max(g,r.answer);
+  const classAvg=cls.length?cls.reduce((a,b)=>a+b,0)/cls.length:null;
+
+  const ppBubble=newBubbles(["pp"]);
+  i++;
+  screen.innerHTML=`
+   <div class="tile ${t.tone}" id="resTile">
+     <div class="result-head"><h2 class="shout">${shout(t.h)}</h2><span class="plus" id="plus">+${p}</span></div>
+     <div class="meter" role="img" aria-label="Accuracy ${6-TIERS.indexOf(t)} of 6">${TIERS.map((x,k)=>`<i class="${k>=TIERS.indexOf(t)?"on":""}"></i>`).join("")}</div>
+     <p class="tier">${esc(t.say)}</p>
+     <p>${esc(o.s)} <b>+${p} XP</b></p>
+   </div>
+   <div class="tile">
+     <div class="spread">${chip(r)}<span class="code">${r.code}</span></div>
+     <div class="realrow">
+       <div><p class="realnum">${shout(fmt(r.answer).replace("%",""))}<small>%</small></p></div>
+       ${dialSVG("revealDial",g)}
+     </div>
+     <div class="plot" role="img" style="height:${plotH}px" aria-label="Number line from 0 to 100 percent. Your guess ${g}%. Real figure ${fmt(r.answer)}.${cls.length?` ${cls.length} class guesses, average ${pp(classAvg)}%.`:""}">
+       <div class="base"></div>
+       <div class="gap" style="left:${lo}%;width:${hi-lo}%"></div>
+       ${dots.map((d,k)=>`<div class="d" style="left:${d.x}%;bottom:${12+d.lvl*17}px;animation-delay:${(k*45)}ms"></div>`).join("")}
+       <div class="real" style="left:${r.answer}%;height:${plotH-6}px;animation-delay:${cls.length?Math.min(1400,cls.length*45+200):150}ms"></div>
+       <div class="flag" style="left:clamp(40px,${r.answer}%,calc(100% - 40px))">Real ${fmt(r.answer)}</div>
+       <div class="you" style="left:${g}%"></div>
+     </div>
+     <div class="axis" aria-hidden="true"><span>0</span><span>50</span><span>100</span></div>
+     <div class="legend" aria-hidden="true">
+       <span><i class="y"></i>You: ${g}%</span>
+       ${cls.length?`<span><i class="c"></i>Your class (${cls.length})</span>`:""}
+       <span><i class="r"></i>Real: ${fmt(r.answer)}</span>
+     </div>
+     ${cls.length?`<p class="classnote">Class average: ${pp(classAvg)}%. Each grey dot is one anonymous guess.</p>`
+       :classMode?`<p class="classnote">No class guesses typed in for this round.</p>`:""}
+     <p><b>${esc(dir)}</b></p>
+   </div>
+   ${ppBubble}
+   <div class="tile note">
+     <p>${esc(r.explanation)}</p>
+     <p class="belief"><b>Common belief:</b> ${esc(r.misconception)}</p>
+   </div>
+   ${r.caveat?`<div class="caveat"><strong>Read carefully:</strong> ${esc(r.caveat)}</div>`:""}
+   <p class="src">Source: ${REPORT}, ${esc(r.source)} (${esc(yr(r))}).</p>
+   <button class="btn" id="go" type="button">${shout(i<ROUNDS.length?"Next round":"See my results")}</button>`;
+
+  setHud();
+  // Dial swing: needle starts at the guess, swings to the real figure
+  const dial=$("#revealDial"), needle=dial.querySelector(".needle");
+  dial.setAttribute("aria-hidden","true");
+  if(reduced()){needle.style.transform=`rotate(${r.answer*3.6}deg)`;}
+  else{requestAnimationFrame(()=>requestAnimationFrame(()=>{dial.classList.add("swing");needle.style.transform=`rotate(${r.answer*3.6}deg)`;}));}
+  $("#go").onclick=next;
+  focusFirst();
+
+  // Feedback: animation + sound for this accuracy tier, then XP flies to the bar
+  const tile=$("#resTile");
+  setTimeout(()=>{
+    Sound.play(t.snd);
+    if(t.fx==="confetti"){FX.move(tile,"pop");FX.burst(tile,{n:80,kind:"confetti"});}
+    else if(t.fx==="sparkle"){FX.move(tile,"pop");FX.burst(tile,{n:16,kind:"spark"});}
+    else FX.move(tile,t.fx);
+  },reduced()?0:350);
+  setTimeout(()=>{
+    FX.xpFly($("#plus"),p);
+    if(level(xp)>lvBefore) setTimeout(()=>{Sound.play("levelup");FX.toast(`Level up! LV ${level(xp)}`);},reduced()?0:900);
+  },reduced()?0:900);
+}
+
+/* ============ End ============ */
+function end(){
+  setRail(3);[...rail.children].forEach(d=>{d.className="done";d.removeAttribute("aria-current");});
+  const max=ROUNDS.length*SCORING.points.very.close;
+  const bias=results.reduce((a,x)=>a+x.signed,0)/results.length;
+  const miss=results.reduce((a,x)=>x.e>a.e?x:a);
+  const byStage=STAGES.map((n,s)=>{const xs=results.filter(x=>x.r.stage===s);return {n,avg:xs.reduce((a,x)=>a+x.e,0)/xs.length};});
+  const worst=byStage.reduce((a,x)=>x.avg>a.avg?x:a);
+  const honest=results.filter(x=>(x.close&&x.sure==="very")||(!x.close&&x.sure==="not")).length;
+  const far=results.filter(x=>!x.close);
+  const badge=far.length>=SCORING.BADGE_MIN_FAR&&far.every(x=>x.sure!=="very");
+  const biasTxt=Math.abs(bias)<=2?"Your picture was close to reality."
+    :bias>0?`On average you overestimated women's share by ${pp(Math.abs(bias))} percentage points.`
+    :`On average you underestimated women's share by ${pp(Math.abs(bias))} percentage points.`;
+  screen.innerHTML=`
+   <div class="tile violet">
+     <p class="eyebrow">Your results</p>
+     <h2 class="h-stage">${xp} XP</h2>
+     <p>Level ${level(xp)} · out of ${max} XP possible</p>
+   </div>
+   <p><b>${esc(biasTxt)}</b></p>
+   <div class="stats">
+     <div class="stat"><span class="muted">Biggest miss</span><b>${pp(miss.e)} pp</b><span class="src">${esc(miss.r.code)}: ${esc(miss.r.q)} Real: ${fmt(miss.r.answer)}</span></div>
+     <div class="stat"><span class="muted">Stage you knew least</span><b>${shout(worst.n)}</b><span class="src">Average gap ${pp(worst.avg)} percentage points</span></div>
+     <div class="stat"><span class="muted">Honest calls</span><b>${honest} of ${ROUNDS.length}</b><span class="src">Rounds where "Very sure" was close, or "Not sure" was far off</span></div>
+     <div class="stat"><span class="muted">Close guesses</span><b>${results.filter(x=>x.close).length} of ${ROUNDS.length}</b><span class="src">Within ${SCORING.CLOSE_WITHIN} percentage points</span></div>
+   </div>
+   <p><span class="badge ${badge?"got":""}">Badge · Knows what they don't know${badge?"":" (not this time)"}</span></p>
+   <div class="tile note">
+     <p><b>Takeaway:</b> more women now choose tech subjects at school and study ICT, but the workforce moves slowly. At the pace of the last twelve years, about 0.3 percentage points a year, ICT jobs would not reach one fifth women before the 2040s.</p>
+     <p>In the ICT sector the share has hardly moved at all: 23.9% in 2011, 24.0% in 2023.</p>
+     <p>On the university route, the biggest drop comes early: between the Academic Matura and starting an ICT bachelor, the share of women falls by 7.4 to 11.5 percentage points.</p>
+     <p class="belief"><b>Think about it:</b> why might so many women leave the path into tech before they even start an ICT degree?</p>
+   </div>
+   <p class="src">End-screen facts: ${REPORT}, Sections 4.1, 6.1 and 6.2.</p>
+   <button class="btn" id="again" type="button">${shout("Play again")}</button>
+   <button class="btn second" id="src2" type="button">Sources</button>`;
+  $("#again").onclick=start;$("#src2").onclick=sources;
+  focusFirst();
+  setTimeout(()=>{Sound.play("fanfare");FX.burst(screen.querySelector(".tile.violet"),{n:90});},reduced()?0:250);
+}
+
+/* ============ Sources (separate view, game state is kept) ============ */
+function sources(){
+  const from=document.activeElement;
+  srcView.innerHTML=`
+   <div class="tile">
+     <p class="eyebrow">About this prototype</p>
+     <h2 class="h-tile">${shout("Sources & AI disclosure")}</h2>
+     <p><b>Data:</b> all figures come from the Women in Tech Index Preliminary Study (Lucerne University of Applied Sciences and Arts, August 2026). Page numbers are those printed in the report.</p>
+   </div>
+   <div class="tablewrap"><table><thead><tr><th>Code</th><th>Fact bank ID</th><th>Stage</th><th>Year</th><th style="text-align:right">Figure</th><th>Report</th></tr></thead><tbody>
+   ${ROUNDS.map(r=>`<tr><td class="c">${r.code}</td><td class="c">${r.id}</td><td>${STAGES[r.stage]}</td><td>${esc(yr(r))}</td><td class="n">${fmt(r.answer)}</td><td>${esc(r.source)}</td></tr>`).join("")}
+   </tbody></table></div>
+   <div class="tile">
+     <p><b>Limits of the data:</b></p>
+     <ul class="plain"><li>The report records gender as binary, women and men (Appendix B.1).</li>
+     <li>"ICT occupation" (people in ICT jobs) and "ICT sector" (everyone at ICT companies) measure different things.</li>
+     <li>Pipeline figures compare different groups of people at each stage, not one group followed over time (Appendix B.7).</li>
+     <li>Figures the report flags as resting on small samples were left out on purpose, and very small values (such as the 2.18% unemployment rate) were left out because they do not suit a 0–100% slider.</li></ul>
+   </div>
+   <div class="tile">
+     <p><b>Scoring (starting values for playtesting, not final):</b> a guess is "close" when it is within ${SCORING.CLOSE_WITHIN} percentage points of the real figure.</p>
+     <div class="tablewrap scoretab"><table><thead><tr><th>How sure</th><th style="text-align:right">Close</th><th style="text-align:right">Far off</th></tr></thead><tbody>
+     ${["very","kinda","not"].map(k=>`<tr><td>${SURE_LABEL[k]}</td><td class="n">+${SCORING.points[k].close}</td><td class="n">+${SCORING.points[k].far}</td></tr>`).join("")}
+     </tbody></table></div>
+     <p><b>Feedback after each guess</b> depends on how close you were: ${TIERS.map(x=>`${esc(x.h)} (${x.max===Infinity?"more than 20":x.max===0.5?"exact":"within "+x.max} pp)`).join(", ")}. Each has its own animation and sound. Sounds are made in the browser and can be turned off at the top of the page; animations are switched off when your device asks for reduced motion.</p>
+     <p>A new level every ${SCORING.XP_PER_LEVEL} XP. No streaks, timers, lives, purchases or rankings of classmates.</p>
+     <p><b>Class mode:</b> class guesses are typed in by the teacher as plain numbers, without names. They stay on this device and are gone when the page is closed.</p>
+   </div>
+   <div class="tile">
+     <p><b>AI use:</b> the fact bank was drafted with an AI model from the report and checked by the team. Question texts, explanations and misconceptions were drafted with an AI model from that fact bank, then checked by the team. The game code was written with AI assistance. No AI runs while you play, and the game stores no personal data.</p>
+     <p><b>Status:</b> content from the team fact bank (freeze date 16 November 2026). All figures have been checked by a second team member; final approval is pending.</p>
+   </div>
+   <button class="btn second" id="back" type="button">Back</button>`;
+  screen.hidden=true;$("#hud").hidden=true;const railWas=rail.hidden;rail.hidden=true;srcView.hidden=false;$("#srcBtn").hidden=true;
+  $("#back").onclick=()=>{
+    srcView.hidden=true;srcView.innerHTML="";screen.hidden=false;$("#hud").hidden=false;rail.hidden=railWas;$("#srcBtn").hidden=false;
+    const h=screen.querySelector("h1,h2");
+    if(from&&screen.contains(from))from.focus({preventScroll:false});else if(h){h.tabIndex=-1;h.focus();}
+  };
+  focusFirst(srcView);
+}
+$("#srcBtn").onclick=sources;
+$("#sndBtn").onclick=()=>{const on=Sound.toggle();const b=$("#sndBtn");b.textContent="Sound: "+(on?"on":"off");b.setAttribute("aria-pressed",on);if(on)Sound.play("select");};
+if(!Sound.on){$("#sndBtn").textContent="Sound: off";$("#sndBtn").setAttribute("aria-pressed","false");}
+document.addEventListener("click",e=>{const b=e.target.closest(".btn");if(b&&!b.disabled)Sound.play("tap");});
+document.addEventListener("change",e=>{if(e.target.name==="sure")Sound.play("select");});
+
+/* ============ Accent check for Bagel Fat One ============
+   If the font has no glyphs for ä ö ü é è à, the width matches the fallback font;
+   then words with accents in Bagel text switch to Geist ExtraBold (see .acc). */
+async function checkAccents(){
+  try{
+    const set="äöüéèà";
+    await document.fonts.load('40px "Bagel Fat One"',set+"Ab");
+    const c=document.createElement("canvas").getContext("2d");
+    const w=(f,t)=>{c.font=f;return c.measureText(t).width;};
+    const loaded=Math.abs(w('40px "Bagel Fat One", monospace',"Ab")-w("40px monospace","Ab"))>0.5;
+    if(!loaded) return; // font not loaded at all (offline): nothing to switch
+    const missing=[...set].some(ch=>Math.abs(w('40px "Bagel Fat One", monospace',ch)-w("40px monospace",ch))<0.5
+                                   &&Math.abs(w('40px "Bagel Fat One", serif',ch)-w("40px serif",ch))<0.5);
+    document.documentElement.classList.toggle("no-accents",missing);
+    document.documentElement.dataset.bagelAccents=missing?"missing":"ok";
+  }catch(e){}
+}
+checkAccents();
+start();
+</script>
+</body>
+</html>
